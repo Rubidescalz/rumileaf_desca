@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Camera, Image, Upload, Play, Square, AlertCircle, TrendingUp, Zap, CheckCircle, Loader2, Activity, BarChart3, Timer } from 'lucide-react';
 import * as tf from '@tensorflow/tfjs';
-import { useNavigate } from 'react-router-dom';
+
 import { db, auth, serverTimestamp } from '../firebase';
 import '../styles/animations.css';
 import Panel from '../components/Panel';
@@ -161,8 +161,8 @@ export default function Home() {
     }
     setToast({ message, type });
     toastTimerRef.current = setTimeout(() => setToast(null), 4000);
-  }, []);
-  const navigate = useNavigate();
+  }, [toast]);
+
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -538,7 +538,7 @@ export default function Home() {
       detectFrame();
     }
 
-  }, [isDetecting, activeTab]);
+  }, [isDetecting, activeTab, detectFrame]);
 
 
   const handleImageUpload = (event) => {
@@ -610,7 +610,7 @@ export default function Home() {
       stopCamera();
       setIsDetecting(false);
     };
-  }, [activeTab]);
+  }, [activeTab, stopCamera, uploadedImage]);
 
 
 
