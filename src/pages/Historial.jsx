@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../firebase';
-import { MessageSquare, Loader2, AlertCircle, FileSpreadsheet, FileText, Zap, Clock } from 'lucide-react';
+import { MessageSquare, Loader2, AlertCircle, FileSpreadsheet, FileText, Clock } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -26,7 +26,6 @@ const Historial = () => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
 
   useEffect(() => {
@@ -132,7 +131,6 @@ const Historial = () => {
         pageTitle="Historial de Consultas"
         theme={theme}
         setTheme={setTheme}
-        setSidebarOpen={setSidebarOpen}
       />
 
       <main className="p-6 lg:p-10 mt-16 bg-gradient-to-b from-green-50/40 to-emerald-50/30 dark:from-gray-900 dark:to-gray-950 min-h-screen transition-colors">

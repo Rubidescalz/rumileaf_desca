@@ -136,7 +136,6 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState('camara');
   const [model, setModel] = useState(null);
   const [isModelLoading, setIsModelLoading] = useState(true); // Inicia como true
-  const [modelError, setModelError] = useState(null); // Nuevo estado para error de carga
   const [isDetecting, setIsDetecting] = useState(false);
   const [deteccionFinalizada, setDeteccionFinalizada] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -149,7 +148,7 @@ export default function Home() {
   const [avgConfidence, setAvgConfidence] = useState(0);
   const [uploadedImage, setUploadedImage] = useState(null);
   const [cameraStream, setCameraStream] = useState(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [, setSidebarOpen] = useState(false);
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
   const [toast, setToast] = useState(null);
   const toastTimerRef = useRef(null);
@@ -213,7 +212,6 @@ export default function Home() {
       if (YOLO_MODEL_CACHE) {
         setModel(YOLO_MODEL_CACHE);
         setIsModelLoading(false);
-        setModelError(null);
         return;
       }
       setIsModelLoading(true);
@@ -243,12 +241,10 @@ export default function Home() {
       YOLO_MODEL_CACHE = loadedModel;
       setModel(loadedModel);
       setIsModelLoading(false);
-      setModelError(null);
       console.log('Modelo YOLO cargado y calentado exitosamente');
     } catch (error) {
       console.error('Error cargando el modelo:', error);
       setIsModelLoading(false);
-      setModelError('No se pudo cargar el modelo. Verifica la ruta en la carpeta /public.');
     }
   }, []);
 
@@ -617,25 +613,7 @@ export default function Home() {
   }, [activeTab]);
 
 
-  const formatDate = (date) => {
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  };
 
-
-  const formatTime = (date) => {
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    return `${hours}:${minutes}:${seconds}`;
-  };
-
-
-  const handleNavigateConsultas = () => {
-    navigate('/consultas');
-  };
 
 
   const DetectionResults = () => {
