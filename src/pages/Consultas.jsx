@@ -16,7 +16,8 @@ const GEMINI_MODELS = [
 // Clave API
 const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY || 'AIzaSyBkFlnHIv-rIPglK8tLgjUrcsftufuUmbI';
 const MAX_HISTORY = 6;
-const TIMEOUT_MS = 10000;
+const TIMEOUT_MS = 60000;
+const MAX_OUTPUT_TOKENS = 4096;
 
 async function fetchGeminiChat(history, modelIndex = 0) {
   if (!GEMINI_API_KEY) throw new Error('Falta configurar REACT_APP_GEMINI_API_KEY');
@@ -41,7 +42,7 @@ async function fetchGeminiChat(history, modelIndex = 0) {
       signal: controller.signal,
       body: JSON.stringify({
         contents,
-        generationConfig: { maxOutputTokens: 256, temperature: 0.7 }
+        generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS, temperature: 0.7 }
       })
     });
 
@@ -53,10 +54,70 @@ async function fetchGeminiChat(history, modelIndex = 0) {
 
     const data = await res.json();
     clearTimeout(timeoutId);
-    const text = data?.candidates?.[0]?.content?.parts?.map(p => p.text).join('') || '';
+
+    // Ensamblar texto a partir de todas las fuentes posibles que devuelve la API
+    const extractTextFromData = (d) => {
+      let out = '';
+      if (Array.isArray(d?.candidates) && d.candidates.length > 0) {
+        out = d.candidates
+          .map(c => (c.content?.parts || []).map(p => p.text || '').join(''))
+          .filter(Boolean)
+          .join('\n\n');
+      }
+      if (!out && Array.isArray(d?.output)) {
+        out = d.output
+          .map(o => (o.content || []).map(c => (c.parts || []).map(p => p.text || '').join('')).join(''))
+          .filter(Boolean)
+          .join('\n\n');
+      }
+      if (!out) out = d?.candidates?.[0]?.content?.parts?.map(p => p.text).join('') || '';
+      return out;
+    };
+
+    let text = extractTextFromData(data);
     if (!text) throw new Error('Sin respuesta del modelo');
+
+    // Heurística simple para detectar si la respuesta quedó cortada
+    const isTruncated = (t) => {
+      if (!t) return false;
+      const trimmed = t.trim();
+      const last = trimmed.slice(-1);
+      const endsWithPunct = ['.', '!', '?', '…', '"', "'", ')'].includes(last);
+      if (!endsWithPunct) return true;
+      return false;
+    };
+
+    // Intentar continuar automáticamente hasta 2 veces si la respuesta parece cortada
+    let finalText = text;
+    let continuationAttempts = 0;
+    while (isTruncated(finalText) && continuationAttempts < 2) {
+      continuationAttempts += 1;
+      try {
+        const contController = new AbortController();
+        const contTimeout = setTimeout(() => contController.abort(), TIMEOUT_MS);
+        const contBody = JSON.stringify({
+          contents: [...recent, { role: 'user', parts: [{ text: 'Por favor, continúa tu respuesta anterior.' }] }],
+          generationConfig: { maxOutputTokens: Math.max(512, Math.floor(MAX_OUTPUT_TOKENS / 2)), temperature: 0.7 }
+        });
+        const contRes = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: contController.signal,
+          body: contBody
+        });
+        clearTimeout(contTimeout);
+        if (!contRes.ok) break;
+        const contData = await contRes.json();
+        const contText = extractTextFromData(contData);
+        if (!contText) break;
+        finalText = finalText + '\n\n' + contText;
+      } catch (err) {
+        break;
+      }
+    }
+
     console.log(`✓ Usando modelo: ${currentModel}`);
-    return text;
+    return finalText;
   } catch (error) {
     if (timeoutId) clearTimeout(timeoutId);
     console.warn(`Error con modelo ${currentModel}:`, error.message);
