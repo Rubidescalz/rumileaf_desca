@@ -14,7 +14,7 @@ const GEMINI_MODELS = [
 ];
 
 // Clave API
-const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY || 'AIzaSyAYH-UXknbmvi7l40PiEDHXlLMrTkn7Epw';
+const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY || 'AQ.Ab8RN6I5RCF-UhFLe21UtE9kdzVm8hwAti77XHmmsZSoBgGe-g';
 const MAX_HISTORY = 6;
 const TIMEOUT_MS = 60000;
 const MAX_OUTPUT_TOKENS = 4096;
